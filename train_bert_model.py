@@ -1,6 +1,7 @@
-import pandas as pd
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer
-from datasets import load_dataset, Dataset
+'''train bert based model for emotion analysis'''
+from transformers import pipeline,AutoTokenizer,AutoModelForSequenceClassification
+from transformers import TrainingArguments,Trainer
+from datasets import load_dataset
 import numpy as np
 import evaluate
 from sklearn.metrics import accuracy_score, f1_score
@@ -49,8 +50,8 @@ plt.show()
 # tokenize dataset
 tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment-latest")
 
-
 def tokenize_function(examples):
+    '''tokenize function'''
     return tokenizer(examples["text"], padding='max_length', truncation=True, max_length=512)
 
 
@@ -58,12 +59,13 @@ tokenized_datasets = dataset.map(tokenize_function, batched=True)
 
 # finetuning
 #specify labels
-model = AutoModelForSequenceClassification.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment-latest", num_labels=6, ignore_mismatched_sizes=True)
+model = AutoModelForSequenceClassification.from_pretrained(
+    "cardiffnlp/twitter-roberta-base-sentiment-latest", 
+    num_labels=6, ignore_mismatched_sizes=True)
 
 # train hyperparameters
 training_args = TrainingArguments(
     output_dir="./results",
-    eval_strategy="epoch",
     learning_rate=2e-5,
     per_device_train_batch_size=16,
     per_device_eval_batch_size=16,
@@ -75,6 +77,7 @@ training_args = TrainingArguments(
 # evaluate
 metric = evaluate.load("accuracy")
 def compute_metrics(eval_pred):
+    '''evaluation function'''
     logits, labels = eval_pred
     predictions = np.argmax(logits, axis=-1)
     return metric.compute(predictions=predictions, references=labels)
